@@ -176,7 +176,7 @@
                     <div class="category-info"><h4>আল হাদিস</h4><p>হাদিস ও অন্যান্য গ্রন্থ</p></div>
                     <i class="fas fa-chevron-right arrow-icon"></i>
                 </div>
-                <div class="category-card" onclick="openSubCategory('aqida')">
+                <div class="category-card" onclick="openSubCategory('aqida2')">
                     <img src="https://files.catbox.moe/2y0anz.jpg" class="category-icon" alt="Aqida2">
                     <div class="category-info"><h4>নবীদের জীবন কাহিনী</h4><p>নবীদের জীবন কাহিনী</p></div>
                     <i class="fas fa-chevron-right arrow-icon"></i>
@@ -344,27 +344,54 @@
 
 <script>
     // =========================================================================
-    // মোবাইলের নিজস্ব ব্যাক বাটন (Hardware Back Button) সাপোর্ট
+    // মোবাইলের ব্যাক বাটন (Hardware Back Button) লজিক: ইনফিনিট রিসাইকেল লুপ 
     // =========================================================================
+    
+    // অ্যাপ খোলার সাথে সাথে একটি হিস্ট্রি পুশ করা হচ্ছে যাতে প্রথম ব্যাক বাটনে অ্যাপ না কাটে
+    window.addEventListener("load", function() {
+        history.pushState({main: 'trap'}, "");
+    });
+
     window.addEventListener("popstate", function(e) {
+        
+        // ১. যদি PDF ভিউয়ার খোলা থাকে, তাহলে সেটা বন্ধ হবে
         if (document.getElementById('pdf-viewer-screen').classList.contains('active')) {
             document.getElementById('pdf-viewer-screen').classList.remove('active');
             document.getElementById('pdf-iframe').src = "";
         }
+        // ২. যদি ফুলস্ক্রিন অডিও প্লেয়ার খোলা থাকে, তাহলে সেটা বন্ধ হবে
         else if (document.getElementById('full-player').classList.contains('active')) {
             document.getElementById('full-player').classList.remove('active');
         }
+        // ৩. যদি বইয়ের পিডিএফ লিস্ট খোলা থাকে, তাহলে সাব-ক্যাটাগরিতে ফিরে যাবে
         else if (document.getElementById('books-list-container').style.display === 'block') {
             document.getElementById('books-list-container').style.display = 'none';
             document.getElementById('sub-list-container').style.display = 'block';
         }
+        // ৪. যদি সাব-ক্যাটাগরি লিস্ট খোলা থাকে, তাহলে মেইন ক্যাটাগরিতে ফিরে যাবে
         else if (document.getElementById('sub-list-container').style.display === 'block') {
             document.getElementById('sub-list-container').style.display = 'none';
             document.getElementById('main-category-list').style.display = 'block';
         }
+        // ৫. যদি অডিও সূরার লিস্ট খোলা থাকে, তাহলে অডিওর মেইন পেজে ফিরে যাবে
         else if (document.getElementById('audio-sub-container').style.display === 'block') {
             document.getElementById('audio-sub-container').style.display = 'none';
             document.getElementById('audio-main-list').style.display = 'block';
+        }
+        // ৬. যদি উপরের কোনোটিই খোলা না থাকে (অর্থাৎ ইউজার মেইন হোম পেজে আছে)
+        else {
+            // ব্যাক বাটন চাপলে অ্যাপ যেন বন্ধ না হয়, সেজন্য সাথে সাথে আবার একটি হিস্ট্রি পুশ করা হচ্ছে
+            history.pushState({main: 'trap'}, "");
+            
+            // এরপর পেজ শিফট করা হচ্ছে: Book -> TV -> Audio -> Book ...
+            let activeView = document.querySelector('.main-view.active').id;
+            if (activeView === 'view-book') {
+                switchMainView('view-tv', null);
+            } else if (activeView === 'view-tv') {
+                switchMainView('view-audio', null);
+            } else if (activeView === 'view-audio') {
+                switchMainView('view-book', null);
+            }
         }
     });
 
@@ -382,7 +409,14 @@
         for(var j = 0; j < navs.length; j++) {
             navs[j].classList.remove('active');
         }
-        element.classList.add('active');
+        
+        if (element) {
+            element.classList.add('active');
+        } else {
+            if(viewId === 'view-audio') navs[0].classList.add('active');
+            else if(viewId === 'view-tv') navs[1].classList.add('active');
+            else if(viewId === 'view-book') navs[2].classList.add('active');
+        }
 
         if(viewId === 'view-book') {
             document.getElementById('main-category-list').style.display = 'block';
@@ -395,698 +429,72 @@
     }
 
     // =========================================================================
-    // ১. বইয়ের ডেটাবেস (bImg: '#' যুক্ত করা হয়েছে)
+    // ১. বইয়ের ডেটাবেস 
     // =========================================================================
     const dbAlem = [
-        { 
-            cName: 'ইমাম ইবনে তাইমিয়া', 
-            cDesc: '#', 
-            cIcon: 'https://files.catbox.moe/r4vcxt.jpg', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'নাসির উদ্দিন আলবানী', 
-            cDesc: '#', 
-            cIcon: 'https://files.catbox.moe/g7ab3k.jpg', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'ড. আসাদুল্লাহ আল-গালিব', 
-            cDesc: '#', 
-            cIcon: 'https://files.catbox.moe/9frr9q.jpg', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'আব্দুল আযীয বিন বায', 
-            cDesc: '#', 
-            cIcon: 'https://files.catbox.moe/2jy0ut.png', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'ইমাম বাইহাকী', 
-            cDesc: '#', 
-            cIcon: 'https://files.catbox.moe/mt8mrt.jpg', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'ড. খন্দকার জাহাঙ্গীর', 
-            cDesc: '#', 
-            cIcon: 'https://i.ibb.co/RGphSHzY/image-1785493669892.png', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'ড. মুজাফফর বিন মহসিন', 
-            cDesc: '#', 
-            cIcon: 'https://files.catbox.moe/t6l996.jpg', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-      { 
-            cName: 'আব্দুর রাজ্জাক বিন ইউসুফ', 
-            cDesc: '#', 
-            cIcon: 'https://files.catbox.moe/65m73s.jpg', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-       { 
-            cName: 'কাজী মুহাম্মদ ইব্রাহিম', 
-            cDesc: '#', 
-            cIcon: 'https://files.catbox.moe/6hk9rv.png', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'ব্রাদার রাহুল হোসেন', 
-            cDesc: '#', 
-            cIcon: 'https://files.catbox.moe/cwtz6k.jpg', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'নোমান আলী খান', 
-            cDesc: '#', 
-            cIcon: 'https://i.ibb.co/9m51gghv/image-1785494687958.png', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'মিজানুর রহমান আজহারী', 
-            cDesc: '#', 
-            cIcon: 'https://files.catbox.moe/ew638s.png', 
-            books: [
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-                { bTitle: 't', bImg: '#', bPdf: '#' },
-            ] 
-        },
+        { cName: 'ইমাম ইবনে তাইমিয়া', cDesc: '#', cIcon: 'https://files.catbox.moe/r4vcxt.jpg', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'নাসির উদ্দিন আলবানী', cDesc: '#', cIcon: 'https://files.catbox.moe/g7ab3k.jpg', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'ড. আসাদুল্লাহ আল-গালিব', cDesc: '#', cIcon: 'https://files.catbox.moe/9frr9q.jpg', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'আব্দুল আযীয বিন বায', cDesc: '#', cIcon: 'https://files.catbox.moe/2jy0ut.png', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'ইমাম বাইহাকী', cDesc: '#', cIcon: 'https://files.catbox.moe/mt8mrt.jpg', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'ড. খন্দকার জাহাঙ্গীর', cDesc: '#', cIcon: 'https://i.ibb.co/RGphSHzY/image-1785493669892.png', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'ড. মুজাফফর বিন মহসিন', cDesc: '#', cIcon: 'https://files.catbox.moe/t6l996.jpg', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'আব্দুর রাজ্জাক বিন ইউসুফ', cDesc: '#', cIcon: 'https://files.catbox.moe/65m73s.jpg', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'কাজী মুহাম্মদ ইব্রাহিম', cDesc: '#', cIcon: 'https://files.catbox.moe/6hk9rv.png', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'ব্রাদার রাহুল হোসেন', cDesc: '#', cIcon: 'https://files.catbox.moe/cwtz6k.jpg', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'নোমান আলী খান', cDesc: '#', cIcon: 'https://i.ibb.co/9m51gghv/image-1785494687958.png', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'মিজানুর রহমান আজহারী', cDesc: '#', cIcon: 'https://files.catbox.moe/ew638s.png', books: [ { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, { bTitle: 't', bImg: '#', bPdf: '#' }, ] },
     ];
   
-
-
     const dbHadith = [
-        { 
-            cName: 'সহীহ বুখারী', 
-            cDesc: 'তাওহীদ পাবলিকেশন', 
-            cIcon: 'https://files.catbox.moe/fducpy.png', 
-            books: [
-                { bTitle: 'সহীহ বুখারী( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'সহীহ বুখারী (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ বুখারী(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ বুখারী ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'সহীহ বুখারী(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ বুখারী(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                
-             ]
-          },
-         { 
-            cName: 'সহীহ বুখারী', 
-            cDesc: 'ইসলামিক ফাউন্ডেশন', 
-            cIcon: 'https://files.catbox.moe/3qu0l3.png', 
-            books: [
-                { bTitle: 'সহীহ বুখারী( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'সহীহ বুখারী (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ বুখারী(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ বুখারী ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'সহীহ বুখারী(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ বুখারী(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ বুখারী( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'সহীহ বুখারী (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ বুখারী(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ বুখারী ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-      
-             ]
-          },
-          { 
-            cName: 'সহীহ মুসলিম', 
-            cDesc: 'ইসলামিক ফাউন্ডেশন', 
-            cIcon: 'https://files.catbox.moe/1j930s.png', 
-            books: [
-                { bTitle: 'সহীহ মুসলিম( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'সহীহ মুসলিম (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ মুসলিম(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ মুসলিম ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'সহীহ মুসলিম(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ মুসলিম(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                
-             ]
-          },
-          { 
-            cName: 'সহীহ মুসলিম', 
-            cDesc: 'বাংলাদেশী ইসলামিক সেন্টার', 
-            cIcon: 'https://files.catbox.moe/o4rp1d.png', 
-            books: [
-                { bTitle: 'সহীহ মুসলিম( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'সহীহ মুসলিম (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ মুসলিম(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ মুসলিম ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'সহীহ মুসলিম(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ মুসলিম(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'সহীহ মুসলিম( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'সহীহ মুসলিম (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-               
-             ]
-          },
-          { 
-            cName: 'আবু দাউদ শরীফ', 
-            cDesc: 'ইসলামিক ফাউন্ডেশন', 
-            cIcon: 'https://files.catbox.moe/k86xsw.jpeg', 
-            books: [
-                { bTitle: 'আবু দাউদ শরীফ( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'আবু দাউদ শরীফ (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'আবু দাউদ শরীফ(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'আবু দাউদ শরীফ ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'আবু দাউদ শরীফ(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                
-             ]
-          },
-          { 
-            cName: 'আবু দাউদ শরীফ', 
-            cDesc: ' মোঃ জিল্লুর রহমান জিলানী', 
-            cIcon: 'https://files.catbox.moe/vgcufd.jpg', 
-            books: [
-                { bTitle: '(আবু দাউদ শরীফ ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'আবু দাউদ শরীফ(২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'আবু দাউদ শরীফ(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: 'আবু দাউদ শরীফ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: 'আবু দাউদ শরীফ(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-             ]
-          },
-          { 
-            cName: 'মিশকাতুল মাসাবীহ', 
-            cDesc: '২', 
-            cIcon: 'https://files.catbox.moe/gpoo5x.png', 
-            books: [
-                { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-             ]
-          },
-          { 
-            cName: 'সুনান আত-তিরমিজী', 
-            cDesc: '২', 
-            cIcon: 'https://files.catbox.moe/efzte3.png', 
-            books: [
-                { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-             ]
-          },
-          { 
-            cName: 'সুনান নাসাঈ শরীফ', 
-            cDesc: '২', 
-            cIcon: 'https://files.catbox.moe/86baj6.png', 
-            books: [
-                { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-             ]
-          },
-          { 
-            cName: 'সুনান ইবনু মাজাহ', 
-            cDesc: '২', 
-            cIcon: 'https://files.catbox.moe/5nxgmi.png', 
-            books: [
-                { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-             ]
-          },
-          { 
-            cName: 'সুনান আদ-দারাকুতনী', 
-            cDesc: '২', 
-            cIcon: 'https://files.catbox.moe/op7nvh.jpg', 
-            books: [
-                { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-             ]
-          },
-          { 
-            cName: 'মুয়াত্তা-ইমাম-মালিক', 
-            cDesc: '২', 
-            cIcon: 'https://files.catbox.moe/62we4l.jpg', 
-            books: [
-                { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-             ]
-          },
-          { 
-            cName: 'আল বিদায়া ওয়ান-নিহায়া', 
-            cDesc: '২', 
-            cIcon: 'https://files.catbox.moe/9fixog.jpg', 
-            books: [
-                { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-             ]
-          },
-          
+        { cName: 'সহীহ বুখারী', cDesc: 'তাওহীদ পাবলিকেশন', cIcon: 'https://files.catbox.moe/fducpy.png', books: [ { bTitle: 'সহীহ বুখারী( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'সহীহ বুখারী (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ বুখারী(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ বুখারী ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'সহীহ বুখারী(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ বুখারী(৬ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'সহীহ বুখারী', cDesc: 'ইসলামিক ফাউন্ডেশন', cIcon: 'https://files.catbox.moe/3qu0l3.png', books: [ { bTitle: 'সহীহ বুখারী( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'সহীহ বুখারী (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ বুখারী(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ বুখারী ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'সহীহ বুখারী(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ বুখারী(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ বুখারী( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'সহীহ বুখারী (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ বুখারী(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ বুখারী ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, ] },
+        { cName: 'সহীহ মুসলিম', cDesc: 'ইসলামিক ফাউন্ডেশন', cIcon: 'https://files.catbox.moe/1j930s.png', books: [ { bTitle: 'সহীহ মুসলিম( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'সহীহ মুসলিম (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ মুসলিম(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ মুসলিম ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'সহীহ মুসলিম(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ মুসলিম(৬ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'সহীহ মুসলিম', cDesc: 'বাংলাদেশী ইসলামিক সেন্টার', cIcon: 'https://files.catbox.moe/o4rp1d.png', books: [ { bTitle: 'সহীহ মুসলিম( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'সহীহ মুসলিম (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ মুসলিম(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ মুসলিম ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'সহীহ মুসলিম(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ মুসলিম(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'সহীহ মুসলিম( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'সহীহ মুসলিম (৮ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'আবু দাউদ শরীফ', cDesc: 'ইসলামিক ফাউন্ডেশন', cIcon: 'https://files.catbox.moe/k86xsw.jpeg', books: [ { bTitle: 'আবু দাউদ শরীফ( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'আবু দাউদ শরীফ (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'আবু দাউদ শরীফ(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'আবু দাউদ শরীফ ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'আবু দাউদ শরীফ(৫ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'আবু দাউদ শরীফ', cDesc: ' মোঃ জিল্লুর রহমান জিলানী', cIcon: 'https://files.catbox.moe/vgcufd.jpg', books: [ { bTitle: '(আবু দাউদ শরীফ ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'আবু দাউদ শরীফ(২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'আবু দাউদ শরীফ(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: 'আবু দাউদ শরীফ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: 'আবু দাউদ শরীফ(৫ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'মিশকাতুল মাসাবীহ', cDesc: '২', cIcon: 'https://files.catbox.moe/gpoo5x.png', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'সুনান আত-তিরমিজী', cDesc: '২', cIcon: 'https://files.catbox.moe/efzte3.png', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'সুনান নাসাঈ শরীফ', cDesc: '২', cIcon: 'https://files.catbox.moe/86baj6.png', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'সুনান ইবনু মাজাহ', cDesc: '২', cIcon: 'https://files.catbox.moe/5nxgmi.png', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'সুনান আদ-দারাকুতনী', cDesc: '২', cIcon: 'https://files.catbox.moe/op7nvh.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'মুয়াত্তা-ইমাম-মালিক', cDesc: '২', cIcon: 'https://files.catbox.moe/62we4l.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'আল বিদায়া ওয়ান-নিহায়া', cDesc: '২', cIcon: 'https://files.catbox.moe/9fixog.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
     ];
 
     const dbNew = [
-    { 
-            cName: 'দোয়া ও জিকির', 
-            cDesc: '1', 
-            cIcon: 'https://files.catbox.moe/27e6wx.jpg', 
-            books: [
-                 { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'সালাত নামাজ', 
-            cDesc: '1', 
-            cIcon: 'https://files.catbox.moe/yzryuh.jpg', 
-            books: [
-                 { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'হজ্জ ও উমরাহ', 
-            cDesc: '1', 
-            cIcon: 'https://files.catbox.moe/5ra0os.jpg', 
-            books: [
-                 { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'রমজানের সিয়াম ও রোজা', 
-            cDesc: '1', 
-            cIcon: 'https://files.catbox.moe/gnsc92.jpg', 
-            books: [
-                 { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'ঈদুল আযহার ঈদ-উল-ফিতর নামাজ', 
-            cDesc: '1', 
-            cIcon: 'https://files.catbox.moe/fh50pm.jpg', 
-            books: [
-                 { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'জ্বিন ও শয়তান ঝাড় ফুক', 
-            cDesc: '1', 
-            cIcon: 'https://files.catbox.moe/vwcxhd.jpg', 
-            books: [
-                 { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'তকদীর কি', 
-            cDesc: '1', 
-            cIcon: '2', 
-            books: [
-                 { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },
-        { 
-            cName: 'তবলীগ জামাতের গোমর ফাস', 
-            cDesc: '1', 
-            cIcon: 'https://archive.org/download/20260804_20260804_0956/1585394349852316-4_thumb.jpg', 
-            books: [
-                 { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },    
+        { cName: 'দোয়া ও জিকির', cDesc: '1', cIcon: 'https://files.catbox.moe/27e6wx.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'সালাত নামাজ', cDesc: '1', cIcon: 'https://files.catbox.moe/yzryuh.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'হজ্জ ও উমরাহ', cDesc: '1', cIcon: 'https://files.catbox.moe/5ra0os.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'রমজানের সিয়াম ও রোজা', cDesc: '1', cIcon: 'https://files.catbox.moe/gnsc92.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'ঈদুল আযহার ঈদ-উল-ফিতর নামাজ', cDesc: '1', cIcon: 'https://files.catbox.moe/fh50pm.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'জ্বিন ও শয়তান ঝাড় ফুক', cDesc: '1', cIcon: 'https://files.catbox.moe/vwcxhd.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'তকদীর কি', cDesc: '1', cIcon: '2', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
+        { cName: 'তবলীগ জামাতের গোমর ফাস', cDesc: '1', cIcon: 'https://archive.org/download/20260804_20260804_0956/1585394349852316-4_thumb.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },    
   ];
 
    const dbTafsir = [
-        
-        { 
-            cName: 'তাফসীর ইবনে কাসীর', 
-            cDesc: 'কুরআনের তাফসীর', 
-            cIcon: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', 
-            books: [
-                { bTitle: 'তাফসীর ইবনে কাসীর (১-২-৩ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1M1XqXNCi14vpnDt5_wf0N-CSbLnPpXou/view?usp=drivesdk' },
-                { bTitle: 'তাফসীর ইবনে কাসীর ( ৪-৫-৬-৭ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1GYqY1GkY1IxgXXemHXKcUWFrtfBCSCRf/view?usp=drivesdk' },
-                { bTitle: 'তাফসীর ইবনে কাসীর (৮-৯-১০-১১ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1_kG94yal4VogviCippMM1SQ1YQIbHdaT/view?usp=drivesdk' },
-                { bTitle: 'তাফসীর ইবনে কাসীর (১২ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1YA23VHpb0EaZ6AmzMX0CvjfSUVDkFWEw/view?usp=drivesdk' },
-                { bTitle: 'তাফসীর ইবনে কাসীর (১৩ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1HTYbhCwj16bKJE1IsiUHK9BmHJgLvRDr/view?usp=drivesdk' },
-                { bTitle: 'তাফসীর ইবনে কাসীর (১৪ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1Z3vTAIc2-A4cQjvbATh6cx-6GYppJYqG/view?usp=drivesdk' },
-                { bTitle: 'তাফসীর ইবনে কাসীর (১৫ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/10dipiVkbI-Y18zuaD0hqwj43LgE3Egp9/view?usp=drivesdk' },
-                { bTitle: 'তাফসীর ইবনে কাসীর (১৬ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1uz5vc9oTtsJopQfJu4l0sGXrWDUvkONM/view?usp=drivesdk' },
-                { bTitle: 'তাফসীর ইবনে কাসীর (১৭ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/13951nQtpVyjgq_Wuob8wWPvJ9lzKL02Q/view?usp=drivesdk' },
-                { bTitle: 'তাফসীর ইবনে কাসীর (১৮ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1wzMY8pdvaBrkNXQU1Y486uQNTmW12X9r/view?usp=drivesdk' },
-            
-            ] 
-        },
-        { 
-            cName: 'মারেফুল কুরআন', 
-            cDesc: 'ইসলামিক ফাউন্ডেশন', 
-            cIcon: 'https://files.catbox.moe/1221i5.jpg', 
-            books: [
-                { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৪ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৫ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৭ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৮ খণ্ড)', bImg: '#', bPdf: '#' },
-                
-            ] 
-        },
-        { 
-            cName: 'তাফসীরুল জালালাইন', 
-            cDesc: 'ইসলামিক ফাউন্ডেশন', 
-            cIcon: 'https://files.catbox.moe/l9hcgx.png', 
-            books: [
-                { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৪ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৫ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৭ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৮ খণ্ড)', bImg: '#', bPdf: '#' },
-                
-            ] 
-        },
-        { 
-            cName: 'তাফসীরে মাযহারী', 
-            cDesc: 'ইসলামিক ফাউন্ডেশন', 
-            cIcon: 'https://files.catbox.moe/gt11s6.png', 
-            books: [
-                { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৪ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৫ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৭ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৮ খণ্ড)', bImg: '#', bPdf: '#' },
-                
-            ] 
-        },
-        { 
-            cName: 'তাফসীর ইবনে আব্বাস', 
-            cDesc: 'ইসলামিক ফাউন্ডেশন', 
-            cIcon: '2', 
-            books: [
-                { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৪ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৫ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৭ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৮ খণ্ড)', bImg: '#', bPdf: '#' },
-                
-            ] 
-        },
-        { 
-            cName: 'তাফসীর জাকারিয়া', 
-            cDesc: 'ইসলামিক ফাউন্ডেশন', 
-            cIcon: 'https://files.catbox.moe/q7bn23.png', 
-            books: [
-                { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' },   
-            ] 
-        },
-        { 
-            cName: 'তাফসীরুল কুরআন ৩০ তম পারা', 
-            cDesc: 'ইসলামিক ফাউন্ডেশন', 
-            cIcon: 'https://files.catbox.moe/ruq82f.jpg', 
-            books: [
-                { bTitle: 'তাফসীরুল কুরআন ৩০ তম পারা', bImg: '#', bPdf: '#' },
-               
-                
-            ] 
-        },
-        { 
-            cName: 'তাফসীর তাবারী', 
-            cDesc: 'ইসলামিক ফাউন্ডেশন', 
-            cIcon: 'https://files.catbox.moe/kko2f9.jpg', 
-            books: [
-                { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৪ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৫ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৭ খণ্ড)', bImg: '#', bPdf: '#' },
-                { bTitle: '(৮ খণ্ড)', bImg: '#', bPdf: '#' },
-                
-            ] 
-        },
+        { cName: 'তাফসীর ইবনে কাসীর', cDesc: 'কুরআনের তাফসীর', cIcon: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', books: [ { bTitle: 'তাফসীর ইবনে কাসীর (১-২-৩ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1M1XqXNCi14vpnDt5_wf0N-CSbLnPpXou/view?usp=drivesdk' }, { bTitle: 'তাফসীর ইবনে কাসীর ( ৪-৫-৬-৭ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1GYqY1GkY1IxgXXemHXKcUWFrtfBCSCRf/view?usp=drivesdk' }, { bTitle: 'তাফসীর ইবনে কাসীর (৮-৯-১০-১১ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1_kG94yal4VogviCippMM1SQ1YQIbHdaT/view?usp=drivesdk' }, { bTitle: 'তাফসীর ইবনে কাসীর (১২ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1YA23VHpb0EaZ6AmzMX0CvjfSUVDkFWEw/view?usp=drivesdk' }, { bTitle: 'তাফসীর ইবনে কাসীর (১৩ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1HTYbhCwj16bKJE1IsiUHK9BmHJgLvRDr/view?usp=drivesdk' }, { bTitle: 'তাফসীর ইবনে কাসীর (১৪ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1Z3vTAIc2-A4cQjvbATh6cx-6GYppJYqG/view?usp=drivesdk' }, { bTitle: 'তাফসীর ইবনে কাসীর (১৫ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/10dipiVkbI-Y18zuaD0hqwj43LgE3Egp9/view?usp=drivesdk' }, { bTitle: 'তাফসীর ইবনে কাসীর (১৬ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1uz5vc9oTtsJopQfJu4l0sGXrWDUvkONM/view?usp=drivesdk' }, { bTitle: 'তাফসীর ইবনে কাসীর (১৭ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/13951nQtpVyjgq_Wuob8wWPvJ9lzKL02Q/view?usp=drivesdk' }, { bTitle: 'তাফসীর ইবনে কাসীর (১৮ খণ্ড)', bImg: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', bPdf: 'https://drive.google.com/file/d/1wzMY8pdvaBrkNXQU1Y486uQNTmW12X9r/view?usp=drivesdk' }, ] },
+        { cName: 'মারেফুল কুরআন', cDesc: 'ইসলামিক ফাউন্ডেশন', cIcon: 'https://files.catbox.moe/1221i5.jpg', books: [ { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৪ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৫ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৭ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৮ খণ্ড)', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'তাফসীরুল জালালাইন', cDesc: 'ইসলামিক ফাউন্ডেশন', cIcon: 'https://files.catbox.moe/l9hcgx.png', books: [ { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৪ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৫ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৭ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৮ খণ্ড)', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'তাফসীরে মাযহারী', cDesc: 'ইসলামিক ফাউন্ডেশন', cIcon: 'https://files.catbox.moe/gt11s6.png', books: [ { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৪ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৫ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৭ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৮ খণ্ড)', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'তাফসীর ইবনে আব্বাস', cDesc: 'ইসলামিক ফাউন্ডেশন', cIcon: '2', books: [ { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৪ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৫ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৭ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৮ খণ্ড)', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'তাফসীর জাকারিয়া', cDesc: 'ইসলামিক ফাউন্ডেশন', cIcon: 'https://files.catbox.moe/q7bn23.png', books: [ { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' },    ] },
+        { cName: 'তাফসীরুল কুরআন ৩০ তম পারা', cDesc: 'ইসলামিক ফাউন্ডেশন', cIcon: 'https://files.catbox.moe/ruq82f.jpg', books: [ { bTitle: 'তাফসীরুল কুরআন ৩০ তম পারা', bImg: '#', bPdf: '#' }, ] },
+        { cName: 'তাফসীর তাবারী', cDesc: 'ইসলামিক ফাউন্ডেশন', cIcon: 'https://files.catbox.moe/kko2f9.jpg', books: [ { bTitle: '(১ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(২ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৪ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৫ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৭ খণ্ড)', bImg: '#', bPdf: '#' }, { bTitle: '(৮ খণ্ড)', bImg: '#', bPdf: '#' }, ] },
     ];
 
     const dbHistory = [
-        { 
-            cName: 'b', 
-            cDesc: '#', 
-            cIcon: '#', 
-            books: [
-                { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },
+        { cName: 'b', cDesc: '#', cIcon: '#', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
     ];
 
     const dbAqida = [
-        { 
-            cName: 'ইমানের শাখা', 
-            cDesc: 'কুরআনের তাফসীর', 
-            cIcon: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', 
-            books: [
-                { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },
+        { cName: 'ইমানের শাখা', cDesc: 'কুরআনের তাফসীর', cIcon: 'https://i.ibb.co/ch8K9fZ3/image-1785496321794.jpg', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
          
     ];
 
     Aqida2 = [
-        { 
-            cName: 'নবীদের জীবন কাহিনী', 
-            cDesc: '2', 
-            cIcon: '2', 
-            books: [
-                { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' },
-                { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' },
-                { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' },
-            ] 
-        },
+        { cName: 'নবীদের জীবন কাহিনী', cDesc: '2', cIcon: '2', books: [ { bTitle: '( ১ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (২ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৩ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ৪ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(৫ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৬ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '( ৭ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: ' (৮ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(৯ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: ' ( ১০ খণ্ড)', bImg: '২', bPdf: '২' }, { bTitle: '(১১ খণ্ড)', bImg: '২', bPdf: '#' }, { bTitle: '(১২ খণ্ড)', bImg: '২', bPdf: '#' }, ] },
          
     ];
 
@@ -1104,6 +512,7 @@
         else if(type === 'tafsir') { titleTxt = "তাফসীর ক্যাটাগরি"; dataList = dbTafsir; }
         else if(type === 'history') { titleTxt = "ইতিহাস ও জীবনী"; dataList = dbHistory; }
         else if(type === 'aqida') { titleTxt = "আকীদা ও ফিকহ"; dataList = dbAqida; }
+        else if(type === 'aqida2') { titleTxt = "নবীদের জীবন কাহিনী"; dataList = Aqida2; }
 
         document.getElementById('sub-list-title').innerText = titleTxt;
         let area = document.getElementById('sub-list-render-area');
@@ -1139,6 +548,7 @@
         else if(type === 'tafsir') dataList = dbTafsir;
         else if(type === 'history') dataList = dbHistory;
         else if(type === 'aqida') dataList = dbAqida;
+        else if(type === 'aqida2') dataList = Aqida2;
 
         let item = dataList[index];
         document.getElementById('book-author-title').innerText = item.cName;
@@ -1153,7 +563,6 @@
                     viewUrl = viewUrl.replace('/view', '/preview');
                 }
                 
-                // বইয়ের নিজস্ব ছবি (bImg) থাকলে সেটা নেবে, না থাকলে ক্যাটাগরি আইকন (cIcon) নেবে
                 let coverImage = (b.bImg && b.bImg !== '#') ? b.bImg : item.cIcon;
 
                 html += `
@@ -1206,7 +615,7 @@
         { title: '২৫. সূরা আল ফুরকান', subtitle: 'মাক্কী | আয়াত ৭৭', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/25.%20Surah%20Al-Furqan.mp3' },
         { title: '২৬. সূরা আশ শুআরা', subtitle: 'মাক্কী | আয়াত ২২৭', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/26.%20Ash-Shu%27ara.mp3' },
         { title: '২৭. সূরা আন নামল', subtitle: 'মাক্কী | আয়াত ৯৩', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/27.%20Surah%20An-Naml.mp3' },
-        { title: '২৮. সূরা আল কাসাস', subtitle: 'মাক্কী | আয়াত ۸৮', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/28.%20Surah%20Al-Qasas.mp3' },
+        { title: '২৮. সূরা আল কাসাস', subtitle: 'মাক্কী | আয়াত ৮৮', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/28.%20Surah%20Al-Qasas.mp3' },
         { title: '২৯. সূরা আল আনকাবুত', subtitle: 'মাক্কী | আয়াত ৬৯', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/29.%20Surah%20Al-Ankabut.mp3' },
         { title: '৩০. সূরা আর রুম', subtitle: 'মাক্কী | আয়াত ৬০', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/30.%20Surah%20Ar-Rum.mp3' },
         { title: '৩১. সূরা লুকমান', subtitle: 'মাক্কী | আয়াত ৩৪', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/31.%20Surah%20Luqman.mp3' },
@@ -1279,7 +688,7 @@
         { title: '৯৮. সূরা আল বাইয়্যিনাহ', subtitle: 'মাদানী | আয়াত ৮', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/98.%20Sura%20Al%20Bayenah.mp3' },
         { title: '৯৯. সূরা আয যিলযাল', subtitle: 'মাদানী | আয়াত ৮', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/99.%20Sura%20Al%20Zelzal.mp3' },
         { title: '১০০. সূরা আল আদিয়াত', subtitle: 'মাক্কী | আয়াত ১১', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/100.%20Sura%20Al%20%20Adiat.mp3' },
-        { title: '১০۱. সূরা আল কারিয়াহ', subtitle: 'মাক্কী | আয়াত ১১', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/101.%20Sura%20Al%20%20Qaria.mp3' },
+        { title: '১০১. সূরা আল কারিয়াহ', subtitle: 'মাক্কী | আয়াত ১১', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/101.%20Sura%20Al%20%20Qaria.mp3' },
         { title: '১০২. সূরা আত তাকাসুর', subtitle: 'মাক্কী | আয়াত ৮', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/102.%20Sura%20At%20Takasur.mp3' },
         { title: '১০৩. সূরা আল আসর', subtitle: 'মাক্কী | আয়াত ৩', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/103.%20Sura%20Al%20%20Asar.mp3' },
         { title: '১০৪. সূরা আল হুমাযাহ', subtitle: 'মাক্কী | আয়াত ৯', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/104.%20Sura%20Al%20%20Humazha.mp3' },
@@ -1293,128 +702,18 @@
         { title: '১১২. সূরা আল ইখলাস', subtitle: 'মাক্কী | আয়াত ৪', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/112.%20%20Sura%20%20Al%20%20Ikhlas.mp3' },
         { title: '১১৩. সূরা আল ফালাক', subtitle: 'মাক্কী | আয়াত ৫', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/113.%20Sura%20Al%20Falaque.mp3' },
         { title: '১১৪. সূরা আন নাস', subtitle: 'মাক্কী | আয়াত ৬', img: 'https://i.ibb.co/wFwj3F0B/image.png', link1: 'https://archive.org/download/1.-surah-al-fatiha/114.%20Sura%20An%20Nas.mp3' }
-    
     ];
 
     const audioDataSources = {
-        'Afasy': quran114List,
+        'mishary': quran114List,
         'Afasy': [
-                { title: '১. সূরা আল-ফাতিহা', subtitle: 'মাক্কী | আয়াত ৭', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/001.mp3' },
-        { title: '২. সূরা আল-বাকারা', subtitle: 'মাদানী | আয়াত ২৮৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/002.mp3' },
-        { title: '৩. সূরা আলে ইমরান', subtitle: 'মাদানী | আয়াত ২০০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/003.mp3' },
-        { title: '৪. সূরা আন নিসা', subtitle: 'মাদানী | আয়াত ১৭৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/002.mp3' },
-        { title: '৫. সূরা আল মায়িদা', subtitle: 'মাদানী | আয়াত ১২০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/003.mp3' },
-        { title: '৬. সূরা আল আনআম', subtitle: 'মাক্কী | আয়াত ১৬৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭. সূরা আল আরাফ', subtitle: 'মাক্কী | আয়াত ২০৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮. সূরা আল আনফাল', subtitle: 'মাদানী | আয়াত ৭৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯. সূরা আত তাওবাহ', subtitle: 'মাদানী | আয়াত ১২৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০. সূরা ইউনুস', subtitle: 'মাক্কী | আয়াত ১০৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১১. সূরা হুদ', subtitle: 'মাক্কী | আয়াত ১২৩', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১২. সূরা ইউসুফ', subtitle: 'মাক্কী | আয়াত ১১১', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১৩. সূরা আর রাদ', subtitle: 'মাদানী | আয়াত ৪৩', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১৪. সূরা ইবরাহীম', subtitle: 'মাক্কী | আয়াত ৫২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১৫. সূরা আল হিজর', subtitle: 'মাক্কী | আয়াত ৯৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১৬. সূরা আন নাহল', subtitle: 'মাক্কী | আয়াত ১২৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১৭. সূরা আল ইসরা', subtitle: 'মাক্কী | আয়াত ১১১', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১৮. সূরা আল কাহফ', subtitle: 'মাক্কী | আয়াত ১১০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১৯. সূরা মারইয়াম', subtitle: 'মাক্কী | আয়াত ৯৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '২০. সূরা ত্বোয়া-হা', subtitle: 'মাক্কী | আয়াত ১৩৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '২১. সূরা আল আম্বিয়া', subtitle: 'মাক্কী | আয়াত ১১২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '২২. সূরা আল হাজ্জ', subtitle: 'মাদানী | আয়াত ৭৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '২৩. সূরা আল মুমিনুন', subtitle: 'মাক্কী | আয়াত ১১৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '২৪. সূরা আন নূর', subtitle: 'মাদানী | আয়াত ৬৪', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '২৫. সূরা আল ফুরকান', subtitle: 'মাক্কী | আয়াত ৭৭', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '২৬. সূরা আশ শুআরা', subtitle: 'মাক্কী | আয়াত ২২৭', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '২৭. সূরা আন নামল', subtitle: 'মাক্কী | আয়াত ৯৩', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '২৮. সূরা আল কাসাস', subtitle: 'মাক্কী | আয়াত ৮৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '২৯. সূরা আল আনকাবুত', subtitle: 'মাক্কী | আয়াত ৬৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৩০. সূরা আর রুম', subtitle: 'মাক্কী | আয়াত ৬০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৩১. সূরা লুকমান', subtitle: 'মাক্কী | আয়াত ৩৪', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৩২. সূরা আস সাজদাহ', subtitle: 'মাক্কী | আয়াত ৩০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৩৩. সূরা আল আহযাব', subtitle: 'মাদানী | আয়াত ৭৩', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৩৪. সূরা সাবা', subtitle: 'মাক্কী | আয়াত ৫৪', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৩৫. সূরা ফাতির', subtitle: 'মাক্কী | আয়াত ৪৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৩৬. সূরা ইয়াসীন', subtitle: 'মাক্কী | আয়াত ৮৩', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৩৭. সূরা আস ছাফফাত', subtitle: 'মাক্কী | আয়াত ১৮২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৩৮. সূরা ছোয়াদ', subtitle: 'মাক্কী | আয়াত ৮৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৩৯. সূরা আয যুমার', subtitle: 'মাক্কী | আয়াত ৭৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৪০. সূরা গাফির', subtitle: 'মাক্কী | আয়াত ৮৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৪১. সূরা ফুসসিলাত', subtitle: 'মাক্কী | আয়াত ৫৪', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৪২. সূরা আশ শূরা', subtitle: 'মাক্কী | আয়াত ৫৩', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৪৩. সূরা আয যুখরুফ', subtitle: 'মাক্কী | আয়াত ৮৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৪৪. সূরা আদ দুখান', subtitle: 'মাক্কী | আয়াত ৫৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৪৫. সূরা আল জাসিয়াহ', subtitle: 'মাক্কী | আয়াত ৩৭', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৪৬. সূরা আল আহকাফ', subtitle: 'মাক্কী | আয়াত ৩৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৪৭. সূরা মুহাম্মদ', subtitle: 'মাদানী | আয়াত ৩৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৪৮. সূরা আল ফাতহ', subtitle: 'মাদানী | আয়াত ২৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৪৯. সূরা আল হুজুরাত', subtitle: 'মাদানী | আয়াত ১৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৫০. সূরা ক্বাফ', subtitle: 'মাক্কী | আয়াত ৪৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৫১. সূরা আয যারিয়াত', subtitle: 'মাক্কী | আয়াত ৬০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৫২. সূরা আত তূর', subtitle: 'মাক্কী | আয়াত ৪৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৫৩. সূরা আন নাজম', subtitle: 'মাক্কী | আয়াত ৬২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৫৪. সূরা আল ক্বামার', subtitle: 'মাক্কী | আয়াত ৫৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৫৫. সূরা আর রাহমান', subtitle: 'মাদানী | আয়াত ৭৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৫৬. সূরা আল ওয়াকিয়াহ', subtitle: 'মাক্কী | আয়াত ৯৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৫৭. সূরা আল হাদীদ', subtitle: 'মাদানী | আয়াত ২৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৫৮. সূরা আল মুজাদালাহ', subtitle: 'মাদানী | আয়াত ২২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৫৯. সূরা আল হাশর', subtitle: 'মাদানী | আয়াত ২৪', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৬০. সূরা আল মুমতাহিনাহ', subtitle: 'মাদানী | আয়াত ১৩', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৬১. সূরা আস সাফ', subtitle: 'মাদানী | আয়াত ১৪', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৬২. সূরা আল জুমুআহ', subtitle: 'মাদানী | আয়াত ১১', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৬৩. সূরা আল মুনাফিকুন', subtitle: 'মাদানী | আয়াত ১১', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৬৪. সূরা আত তাগাবুন', subtitle: 'মাদানী | আয়াত ১৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৬৫. সূরা আত তালাক', subtitle: 'মাদানী | আয়াত ১২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৬৬. সূরা আত তাহরীম', subtitle: 'মাদানী | আয়াত ১২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৬৭. সূরা আল মুলক', subtitle: 'মাক্কী | আয়াত ৩০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৬৮. সূরা আল কলম', subtitle: 'মাক্কী | আয়াত ৫২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৬৯. সূরা আল হাক্কাহ', subtitle: 'মাক্কী | আয়াত ৫২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭০. সূরা আল মাআরিজ', subtitle: 'মাক্কী | আয়াত ৪৪', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭১. সূরা নূহ', subtitle: 'মাক্কী | আয়াত ২৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭২. সূরা আল জিন', subtitle: 'মাক্কী | আয়াত ২৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭৩. সূরা আল মুযযাম্মিল', subtitle: 'মাক্কী | আয়াত ২০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭৪. সূরা আল মুদ্দাসসির', subtitle: 'মাক্কী | আয়াত ৫৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭৫. সূরা আল কিয়ামাহ', subtitle: 'মাক্কী | আয়াত ৪০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭৬. সূরা আল ইনসান', subtitle: 'মাদানী | আয়াত ৩১', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭৭. সূরা আল মুরসালাত', subtitle: 'মাক্কী | আয়াত ৫০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭৮. সূরা আন নাবা', subtitle: 'মাক্কী | আয়াত ৪০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৭৯. সূরা আন নাযিয়াত', subtitle: 'মাক্কী | আয়াত ৪৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮০. সূরা আবাসা', subtitle: 'মাক্কী | আয়াত ৪২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮১. সূরা আত তাকভীর', subtitle: 'মাক্কী | আয়াত ২৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮২. সূরা আল ইনফিতার', subtitle: 'মাক্কী | আয়াত ১৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮৩. সূরা আল মুতাফফিফীন', subtitle: 'মাক্কী | আয়াত ৩৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮৪. সূরা আল ইনশিকাক', subtitle: 'মাক্কী | আয়াত ২৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮৫. সূরা আল বুরুজ', subtitle: 'মাক্কী | আয়াত ২২', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮৬. সূরা আত তারিক', subtitle: 'মাক্কী | আয়াত ১৭', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮৭. সূরা আল আ\'লা', subtitle: 'মাক্কী | আয়াত ১৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮৮. সূরা আল গাশিয়াহ', subtitle: 'মাক্কী | আয়াত ২৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৮৯. সূরা আল ফাজর', subtitle: 'মাক্কী | আয়াত ৩০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯০. সূরা আল বালাদ', subtitle: 'মাক্কী | আয়াত ২০', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯১. সূরা আশ শামস', subtitle: 'মাক্কী | আয়াত ১৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯২. সূরা আল লাইল', subtitle: 'মাক্কী | আয়াত ২১', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯৩. সূরা আদ দুহা', subtitle: 'মাক্কী | আয়াত ১১', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯৪. সূরা আল ইনশিরাহ', subtitle: 'মাক্কী | আয়াত ৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯৫. সূরা আত ত্বীন', subtitle: 'মাক্কী | আয়াত ৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯৬. সূরা আল আলাক', subtitle: 'মাক্কী | আয়াত ১৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯৭. সূরা আল কদর', subtitle: 'মাক্কী | আয়াত ৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯৮. সূরা আল বাইয়্যিনাহ', subtitle: 'মাদানী | আয়াত ৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '৯৯. সূরা আয যিলযাল', subtitle: 'মাদানী | আয়াত ৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০০. সূরা আল আদিয়াত', subtitle: 'মাক্কী | আয়াত ১১', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০১. সূরা আল কারিয়াহ', subtitle: 'মাক্কী | আয়াত ১১', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০২. সূরা আত তাকাসুর', subtitle: 'মাক্কী | আয়াত ৮', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০৩. সূরা আল আসর', subtitle: 'মাক্কী | আয়াত ৩', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০৪. সূরা আল হুমাযাহ', subtitle: 'মাক্কী | আয়াত ৯', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০৫. সূরা আল ফীল', subtitle: 'মাক্কী | আয়াত ৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০৬. সূরা কুরাইশ', subtitle: 'মাক্কী | আয়াত ৪', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০৭. সূরা আল মাউন', subtitle: 'মাক্কী | আয়াত ৭', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০৮. সূরা আল কাওসার', subtitle: 'মাক্কী | আয়াত ৩', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১০৯. সূরা আল কাফিরুন', subtitle: 'মাক্কী | আয়াত ৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১১০. সূরা আন নাসর', subtitle: 'মাদানী | আয়াত ৩', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১১১. সূরা আল লাহাব', subtitle: 'মাক্কী | আয়াত ৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১১২. সূরা আল ইখলাস', subtitle: 'মাক্কী | আয়াত ৪', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১১৩. সূরা আল ফালাক', subtitle: 'মাক্কী | আয়াত ৫', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' },
-        { title: '১১৪. সূরা আন নাস', subtitle: 'মাক্কী | আয়াত ৬', img: 'https://i.ibb.co/00C1wN7/download-6.jpg', link1: '#' }       
+            { title: '১. সূরা আল-ফাতিহা', subtitle: 'মাক্কী | আয়াত ৭', img: 'https://i.ibb.co/VWB2qHvG/download-5.jpg', link1: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/001.mp3' },
+            { title: '২. সূরা আল-বাকারা', subtitle: 'মাদানী | আয়াত ২৮৬', img: 'https://i.ibb.co/VWB2qHvG/download-5.jpg', link1: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/002.mp3' },
+            { title: '৩. সূরা আলে ইমরান', subtitle: 'মাদানী | আয়াত ২০০', img: 'https://i.ibb.co/VWB2qHvG/download-5.jpg', link1: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/003.mp3' },
+            { title: '৪. সূরা আন নিসা', subtitle: 'মাদানী | আয়াত ১৭৬', img: 'https://i.ibb.co/VWB2qHvG/download-5.jpg', link1: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/004.mp3' },
+            { title: '৫. সূরা আল মায়িদা', subtitle: 'মাদানী | আয়াত ১২০', img: 'https://i.ibb.co/VWB2qHvG/download-5.jpg', link1: 'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/005.mp3' }
         ],
-        'Afaso': [
+        'abdulbasit': [
             { title: '১. সূরা আল-ফাতিহা', subtitle: 'মাক্কী | আয়াত ৭', img: 'https://files.catbox.moe/i89c2w.jpg', link1: 'https://server7.mp3quran.net/basit/001.mp3' },
             { title: '২. সূরা আল-বাকারা', subtitle: 'মাদানী | আয়াত ২৮৬', img: 'https://files.catbox.moe/i89c2w.jpg', link1: 'https://server7.mp3quran.net/basit/002.mp3' },
             { title: '৩. সূরা আলে ইমরান', subtitle: 'মাদানী | আয়াত ২০০', img: 'https://files.catbox.moe/i89c2w.jpg', link1: 'https://server7.mp3quran.net/basit/003.mp3' },
